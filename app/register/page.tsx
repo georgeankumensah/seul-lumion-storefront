@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
@@ -15,7 +14,6 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
-  const { register } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
 
@@ -24,7 +22,7 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      await register(email, password, name)
+      // await register(email, password, name)
       router.push("/account")
     } catch (error) {
       toast({
