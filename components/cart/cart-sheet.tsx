@@ -6,9 +6,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useCart } from "@/lib/hooks/use-cart"
 import Link from "next/link"
 import CartItem from "./cart-item"
+import { CouponInput } from "@/components/cart/coupon-input"
 
 export default function CartSheet() {
-  const { items, total } = useCart()
+  const { items, total, subtotal, coupon } = useCart()
 
   return (
     <Sheet>
@@ -41,6 +42,19 @@ export default function CartSheet() {
           </div>
           {items.length > 0 && (
             <div className="border-t pt-6">
+              <div className="space-y-4 mb-4">
+                <CouponInput />
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span>${subtotal.toFixed(2)}</span>
+                </div>
+                {coupon && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount</span>
+                    <span>-${coupon.discount.toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
               <div className="flex justify-between mb-4">
                 <span className="font-medium">Total</span>
                 <span className="font-medium">${total.toFixed(2)}</span>

@@ -8,17 +8,23 @@ import { products } from "@/lib/data"
 import ImageGallery from "@/components/product/image-gallery"
 import { useCart } from "@/lib/hooks/use-cart"
 import { useToast } from "@/components/ui/use-toast"
+import { RelatedProducts } from "@/components/product/related-products"
+import { useLocale } from "@/lib/hooks/use-locale"
+import { formatPrice } from "@/lib/utils/format"
+import { useDictionary } from "@/lib/hooks/use-dictionary"
 
 export default function ProductPage({ params }: { params: { slug: string } }) {
   const product = products.find((p) => p.slug === params.slug) || products[0]
   const [selectedSize, setSelectedSize] = useState("")
   const { addItem } = useCart()
   const { toast } = useToast()
+  const { locale, currency } = useLocale()
+  const dictionary = useDictionary()
 
   const handleAddToCart = () => {
     if (!selectedSize) {
       toast({
-        title: "Please select a size",
+        title: dictionary?.product?.selectSize || "Please select a size",
         variant: "destructive",
       })
       return
@@ -26,9 +32,13 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
 
     addItem(product, selectedSize)
     toast({
-      title: "Added to cart",
-      description: `${product.name} - Size ${selectedSize}`,
+      title: dictionary?.product?.addedToCart || "Added to cart",
+      description: `${product.name} - ${dictionary?.product?.size || "Size"} ${selectedSize}`,
     })
+  }
+
+  if (!dictionary) {
+    return null // Or loading state
   }
 
   return (
@@ -42,12 +52,12 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
             <div className="space-y-6">
               <div>
                 <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-                <p className="text-2xl">${product.price.toFixed(2)}</p>
+                <p className="text-2xl">{formatPrice(product.price, currency, locale)}</p>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-medium mb-2">Size</h3>
+                  <h3 className="font-medium mb-2">{dictionary.product.size}</h3>
                   <div className="grid grid-cols-4 gap-2">
                     {["S", "M", "L", "XL"].map((size) => (
                       <button
@@ -65,14 +75,14 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
               </div>
 
               <Button className="w-full py-6" onClick={handleAddToCart}>
-                Add to Cart
+                {dictionary.product.addToCart}
               </Button>
 
               <div className="prose prose-sm">
-                <h3>Description</h3>
+                <h3>{dictionary.product.description}</h3>
                 <p>{product.description}</p>
 
-                <h3>Details</h3>
+                <h3>{dictionary.product.details}</h3>
                 <ul>
                   {product.details.map((detail, i) => (
                     <li key={i}>{detail}</li>
@@ -81,6 +91,8 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
               </div>
             </div>
           </div>
+
+          <RelatedProducts currentProduct={product} />
         </div>
       </main>
       <Footer />

@@ -1,12 +1,9 @@
-"use client"
 import Header from "@/components/layout/header"
 import Footer from "@/components/layout/footer"
 import ProductCard from "@/components/product/product-card"
-import { useProductsStore } from "@/store";
+import { products } from "@/lib/data"
 
 export default function ShopAll() {
-  const { products, addProduct, removeProduct, updateProduct, clearProducts } =
-  useProductsStore();
   return (
     <>
       <Header />
@@ -46,7 +43,7 @@ export default function ShopAll() {
             <div className="flex-1">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {products.map((product) => (
-                  <ProductCard key={product._id} product={product} />
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             </div>

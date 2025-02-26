@@ -12,6 +12,7 @@ import {
   TagsIcon as Categories,
   ImageIcon,
   BarChart,
+  Ticket,
 } from "lucide-react"
 
 const routes = [
@@ -58,6 +59,12 @@ const routes = [
     color: "text-purple-700",
   },
   {
+    label: "Coupons",
+    icon: Ticket,
+    href: "/admin/coupons",
+    color: "text-purple-500",
+  },
+  {
     label: "Settings",
     icon: Settings,
     href: "/admin/settings",
@@ -71,7 +78,7 @@ export function AdminSidebar() {
     <div className="space-y-4 py-4 flex flex-col h-full bg-gray-100 text-gray-800">
       <div className="px-3 py-2 flex-1">
         <Link href="/admin" className="flex items-center pl-3 mb-14">
-          <h1 className="text-2xl font-bold">Seul Lumion</h1>
+          <h1 className="text-2xl font-bold">Admin Panel</h1>
         </Link>
         <div className="space-y-1">
           {routes.map((route) => (

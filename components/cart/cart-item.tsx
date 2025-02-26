@@ -3,6 +3,8 @@
 import { Minus, Plus, X } from "lucide-react"
 import { useCart } from "@/lib/hooks/use-cart"
 import type { CartItem as CartItemType } from "@/types"
+import { useLocale } from "@/lib/hooks/use-locale"
+import { formatPrice } from "@/lib/utils/format"
 
 interface CartItemProps {
   item: CartItemType
@@ -10,6 +12,7 @@ interface CartItemProps {
 
 export default function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeItem } = useCart()
+  const { locale, currency } = useLocale()
 
   return (
     <div className="flex gap-4">
@@ -34,7 +37,7 @@ export default function CartItem({ item }: CartItemProps) {
               <Plus className="h-4 w-4" />
             </button>
           </div>
-          <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+          <p className="font-medium">{formatPrice(item.price * item.quantity, currency, locale)}</p>
         </div>
       </div>
     </div>

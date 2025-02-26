@@ -1,0 +1,29 @@
+{
+  "common": {
+    "cart": "Carrito",
+    "search": "Buscar",
+    "account": "Cuenta",
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "logout": "Cerrar sesión",
+    "menu": "Menú"
+  },
+  "product": {
+    "addToCart": "Añadir al carrito",
+    "outOfStock": "Agotado",
+    "size": "Talla",
+    "quantity": "Cantidad",
+    "description": "Descripción",
+    "details": "Detalles",
+    "relatedProducts": "Productos relacionados"
+  },
+  "cart": {
+    "empty": "Tu carrito está vacío",
+    "continueShopping": "Seguir comprando",
+    "subtotal": "Subtotal",
+    "shipping": "Envío",
+    "total": "Total",
+    "checkout": "Pagar"
+  }
+}
+

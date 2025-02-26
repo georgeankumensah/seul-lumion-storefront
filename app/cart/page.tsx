@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Minus, Plus, X } from "lucide-react"
 import { useCart } from "@/lib/hooks/use-cart"
 import Link from "next/link"
+import { CouponInput } from "@/components/cart/coupon-input"
 
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, total } = useCart()
+  const { items, updateQuantity, removeItem, total, coupon, subtotal } = useCart()
 
   if (items.length === 0) {
     return (
@@ -75,11 +76,18 @@ export default function CartPage() {
             <div className="lg:col-span-1">
               <div className="bg-gray-50 p-6">
                 <h2 className="text-lg font-bold mb-4">Order Summary</h2>
-                <div className="space-y-2 mb-4">
+                <div className="space-y-4 mb-4">
+                  <CouponInput />
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>${subtotal.toFixed(2)}</span>
                   </div>
+                  {coupon && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount</span>
+                      <span>-${coupon.discount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Shipping</span>
                     <span>Calculated at checkout</span>

@@ -5,10 +5,39 @@ import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ProductForm } from "@/components/admin/product-form"
-import { products } from "@/lib/data"
+import { useProducts } from "@/lib/hooks/use-products"
+import { ProductSkeleton } from "@/components/skeletons/product-skeleton"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function ProductsPage() {
   const [isCreating, setIsCreating] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<any>(null)
+  const { products, isLoading, mutate } = useProducts()
+  const { toast } = useToast()
+
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/products/${id}`, {
+        method: "DELETE",
+      })
+
+      if (!res.ok) throw new Error("Failed to delete product")
+
+      mutate()
+      toast({
+        title: "Success",
+        description: "Product deleted successfully",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete product",
+        variant: "destructive",
+      })
+    }
+  }
+
+  if (isLoading) return <ProductSkeleton />
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
@@ -32,17 +61,17 @@ export default function ProductsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map((product) => (
+            {products?.map((product) => (
               <TableRow key={product.id}>
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.category}</TableCell>
                 <TableCell>${product.price}</TableCell>
-                <TableCell>100</TableCell>
+                <TableCell>{product.stock}</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" onClick={() => setEditingProduct(product)}>
                     Edit
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-red-600">
+                  <Button variant="ghost" size="sm" className="text-red-600" onClick={() => handleDelete(product.id)}>
                     Delete
                   </Button>
                 </TableCell>
@@ -51,7 +80,19 @@ export default function ProductsPage() {
           </TableBody>
         </Table>
       </div>
-      <ProductForm open={isCreating} onClose={() => setIsCreating(false)} />
+      <ProductForm
+        open={isCreating || !!editingProduct}
+        onClose={() => {
+          setIsCreating(false)
+          setEditingProduct(null)
+        }}
+        initialData={editingProduct}
+        onSuccess={() => {
+          mutate()
+          setIsCreating(false)
+          setEditingProduct(null)
+        }}
+      />
     </div>
   )
 }

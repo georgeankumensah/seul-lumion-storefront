@@ -1,7 +1,5 @@
 "use client"
 
-import { Separator } from "@/components/ui/separator"
-
 import type React from "react"
 
 import { useState } from "react"
@@ -14,30 +12,98 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
+import { useSettings } from "@/lib/hooks/use-settings"
+import { Loader2 } from "lucide-react"
+
+const locales = [
+  { code: "en", name: "English" },
+  { code: "fr", name: "French" },
+  { code: "es", name: "Spanish" },
+]
+
+const currencies = [
+  { code: "USD", name: "US Dollar", symbol: "$" },
+  { code: "EUR", name: "Euro", symbol: "€" },
+  { code: "GBP", name: "British Pound", symbol: "£" },
+]
 
 export default function SettingsPage() {
-  const [loading, setLoading] = useState(false)
+  const { settings, isLoading, mutate } = useSettings()
+  const [saving, setSaving] = useState(false)
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setSaving(true)
+
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const formData = new FormData(e.target as HTMLFormElement)
+      const data = Object.fromEntries(formData.entries())
+
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!res.ok) throw new Error("Failed to save settings")
+
+      await mutate()
       toast({
-        title: "Settings saved",
-        description: "Your changes have been saved successfully.",
+        title: "Success",
+        description: "Settings saved successfully",
       })
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to save settings. Please try again.",
+        description: "Failed to save settings",
         variant: "destructive",
       })
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
+  }
+
+  const handleSave = async (data: any) => {
+    setSaving(true)
+
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!res.ok) throw new Error("Failed to save settings")
+
+      await mutate()
+      toast({
+        title: "Success",
+        description: "Settings saved successfully",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save settings",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -53,6 +119,7 @@ export default function SettingsPage() {
           <TabsTrigger value="shipping">Shipping</TabsTrigger>
           <TabsTrigger value="payments">Payments</TabsTrigger>
           <TabsTrigger value="api">API</TabsTrigger>
+          <TabsTrigger value="localization">Localization</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-4">
@@ -65,24 +132,24 @@ export default function SettingsPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="store-name">Store Name</Label>
-                    <Input id="store-name" placeholder="Your store name" />
+                    <Label htmlFor="storeName">Store Name</Label>
+                    <Input id="storeName" name="storeName" defaultValue={settings?.storeName} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="store-email">Contact Email</Label>
-                    <Input id="store-email" type="email" placeholder="contact@example.com" />
+                    <Label htmlFor="storeEmail">Contact Email</Label>
+                    <Input id="storeEmail" name="storeEmail" type="email" defaultValue={settings?.storeEmail} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="store-phone">Phone Number</Label>
-                    <Input id="store-phone" type="tel" placeholder="+1 234 567 890" />
+                    <Label htmlFor="storePhone">Phone Number</Label>
+                    <Input id="storePhone" name="storePhone" type="tel" defaultValue={settings?.storePhone} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="store-address">Store Address</Label>
-                    <Textarea id="store-address" placeholder="Enter your store's address" />
+                    <Label htmlFor="storeAddress">Store Address</Label>
+                    <Textarea id="storeAddress" name="storeAddress" defaultValue={settings?.storeAddress} />
                   </div>
                 </div>
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Saving..." : "Save Changes"}
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Saving..." : "Save Changes"}
                 </Button>
               </form>
             </CardContent>
@@ -94,29 +161,34 @@ export default function SettingsPage() {
               <CardDescription>Customize your store's behavior and appearance.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Maintenance Mode</Label>
-                    <p className="text-sm text-muted-foreground">Temporarily disable your store for maintenance</p>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Maintenance Mode</Label>
+                      <p className="text-sm text-muted-foreground">Temporarily disable your store for maintenance</p>
+                    </div>
+                    <Switch name="maintenanceMode" defaultChecked={settings?.maintenanceMode} />
                   </div>
-                  <Switch />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Customer Reviews</Label>
-                    <p className="text-sm text-muted-foreground">Allow customers to leave product reviews</p>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Customer Reviews</Label>
+                      <p className="text-sm text-muted-foreground">Allow customers to leave product reviews</p>
+                    </div>
+                    <Switch name="customerReviews" defaultChecked={settings?.customerReviews} />
                   </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Inventory Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Get notified when products are low in stock</p>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Inventory Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Get notified when products are low in stock</p>
+                    </div>
+                    <Switch name="inventoryNotifications" defaultChecked={settings?.inventoryNotifications} />
                   </div>
-                  <Switch defaultChecked />
                 </div>
-              </div>
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Saving..." : "Save Changes"}
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </TabsContent>
@@ -216,8 +288,8 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Saving..." : "Save Changes"}
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Saving..." : "Save Changes"}
                 </Button>
               </form>
             </CardContent>
@@ -228,66 +300,268 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Payment Methods</CardTitle>
-              <CardDescription>Configure your accepted payment methods and processing settings.</CardDescription>
+              <CardDescription>Configure your payment gateway settings.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Credit Card Payments</Label>
-                    <p className="text-sm text-muted-foreground">Accept credit card payments via Stripe</p>
+              <div className="space-y-6">
+                {/* Stripe Configuration */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Stripe Payments</Label>
+                      <p className="text-sm text-muted-foreground">Accept credit card payments via Stripe</p>
+                    </div>
+                    <Switch
+                      name="payments.stripe.enabled"
+                      checked={settings?.payments?.stripe?.enabled}
+                      onCheckedChange={(checked) =>
+                        handleSave({
+                          ...settings,
+                          payments: {
+                            ...settings?.payments,
+                            stripe: {
+                              ...settings?.payments?.stripe,
+                              enabled: checked,
+                            },
+                          },
+                        })
+                      }
+                    />
                   </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>PayPal</Label>
-                    <p className="text-sm text-muted-foreground">Accept PayPal payments</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Apple Pay</Label>
-                    <p className="text-sm text-muted-foreground">Accept Apple Pay payments</p>
-                  </div>
-                  <Switch />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Google Pay</Label>
-                    <p className="text-sm text-muted-foreground">Accept Google Pay payments</p>
-                  </div>
-                  <Switch />
-                </div>
-              </div>
 
-              <Separator className="my-6" />
+                  {settings?.payments?.stripe?.enabled && (
+                    <div className="space-y-4 border rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <Label>Test Mode</Label>
+                        <Switch
+                          name="payments.stripe.testMode"
+                          checked={settings?.payments?.stripe?.testMode}
+                          onCheckedChange={(checked) =>
+                            handleSave({
+                              ...settings,
+                              payments: {
+                                ...settings?.payments,
+                                stripe: {
+                                  ...settings?.payments?.stripe,
+                                  testMode: checked,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
 
-              <div className="space-y-4">
-                <h4 className="font-medium">Payment Processing</h4>
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <Label>Currency</Label>
-                    <Select defaultValue="usd">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select currency" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="usd">USD ($)</SelectItem>
-                        <SelectItem value="eur">EUR (€)</SelectItem>
-                        <SelectItem value="gbp">GBP (£)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <div className="space-y-2">
+                        <Label>Live Public Key</Label>
+                        <Input
+                          type="password"
+                          value={settings?.payments?.stripe?.livePublicKey || ""}
+                          onChange={(e) =>
+                            handleSave({
+                              ...settings,
+                              payments: {
+                                ...settings?.payments,
+                                stripe: {
+                                  ...settings?.payments?.stripe,
+                                  livePublicKey: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Live Secret Key</Label>
+                        <Input
+                          type="password"
+                          value={settings?.payments?.stripe?.liveSecretKey || ""}
+                          onChange={(e) =>
+                            handleSave({
+                              ...settings,
+                              payments: {
+                                ...settings?.payments,
+                                stripe: {
+                                  ...settings?.payments?.stripe,
+                                  liveSecretKey: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Test Public Key</Label>
+                        <Input
+                          type="password"
+                          value={settings?.payments?.stripe?.testPublicKey || ""}
+                          onChange={(e) =>
+                            handleSave({
+                              ...settings,
+                              payments: {
+                                ...settings?.payments,
+                                stripe: {
+                                  ...settings?.payments?.stripe,
+                                  testPublicKey: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Test Secret Key</Label>
+                        <Input
+                          type="password"
+                          value={settings?.payments?.stripe?.testSecretKey || ""}
+                          onChange={(e) =>
+                            handleSave({
+                              ...settings,
+                              payments: {
+                                ...settings?.payments,
+                                stripe: {
+                                  ...settings?.payments?.stripe,
+                                  testSecretKey: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Paystack Configuration */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Paystack Payments</Label>
+                      <p className="text-sm text-muted-foreground">Accept payments via Paystack</p>
+                    </div>
+                    <Switch
+                      name="payments.paystack.enabled"
+                      checked={settings?.payments?.paystack?.enabled}
+                      onCheckedChange={(checked) =>
+                        handleSave({
+                          ...settings,
+                          payments: {
+                            ...settings?.payments,
+                            paystack: {
+                              ...settings?.payments?.paystack,
+                              enabled: checked,
+                            },
+                          },
+                        })
+                      }
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="stripe-key">Stripe API Key</Label>
-                    <Input id="stripe-key" type="password" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="paypal-client">PayPal Client ID</Label>
-                    <Input id="paypal-client" type="password" />
-                  </div>
+
+                  {settings?.payments?.paystack?.enabled && (
+                    <div className="space-y-4 border rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <Label>Test Mode</Label>
+                        <Switch
+                          name="payments.paystack.testMode"
+                          checked={settings?.payments?.paystack?.testMode}
+                          onCheckedChange={(checked) =>
+                            handleSave({
+                              ...settings,
+                              payments: {
+                                ...settings?.payments,
+                                paystack: {
+                                  ...settings?.payments?.paystack,
+                                  testMode: checked,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Live Public Key</Label>
+                        <Input
+                          type="password"
+                          value={settings?.payments?.paystack?.livePublicKey || ""}
+                          onChange={(e) =>
+                            handleSave({
+                              ...settings,
+                              payments: {
+                                ...settings?.payments,
+                                paystack: {
+                                  ...settings?.payments?.paystack,
+                                  livePublicKey: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Live Secret Key</Label>
+                        <Input
+                          type="password"
+                          value={settings?.payments?.paystack?.liveSecretKey || ""}
+                          onChange={(e) =>
+                            handleSave({
+                              ...settings,
+                              payments: {
+                                ...settings?.payments,
+                                paystack: {
+                                  ...settings?.payments?.paystack,
+                                  liveSecretKey: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Test Public Key</Label>
+                        <Input
+                          type="password"
+                          value={settings?.payments?.paystack?.testPublicKey || ""}
+                          onChange={(e) =>
+                            handleSave({
+                              ...settings,
+                              payments: {
+                                ...settings?.payments,
+                                paystack: {
+                                  ...settings?.payments?.paystack,
+                                  testPublicKey: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Test Secret Key</Label>
+                        <Input
+                          type="password"
+                          value={settings?.payments?.paystack?.testSecretKey || ""}
+                          onChange={(e) =>
+                            handleSave({
+                              ...settings,
+                              payments: {
+                                ...settings?.payments,
+                                paystack: {
+                                  ...settings?.payments?.paystack,
+                                  testSecretKey: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -363,6 +637,148 @@ export default function SettingsPage() {
                 <Button type="button" variant="outline">
                   Add Webhook Endpoint
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="localization" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Localization Settings</CardTitle>
+              <CardDescription>Configure languages and currencies.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label>Default Language</Label>
+                    <Select
+                      value={settings?.localization?.defaultLanguage}
+                      onValueChange={(value) =>
+                        handleSave({
+                          ...settings,
+                          localization: {
+                            ...settings?.localization,
+                            defaultLanguage: value,
+                          },
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locales.map((locale) => (
+                          <SelectItem key={locale.code} value={locale.code}>
+                            {locale.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Default Currency</Label>
+                    <Select
+                      value={settings?.localization?.defaultCurrency}
+                      onValueChange={(value) =>
+                        handleSave({
+                          ...settings,
+                          localization: {
+                            ...settings?.localization,
+                            defaultCurrency: value,
+                          },
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currencies.map((currency) => (
+                          <SelectItem key={currency.code} value={currency.code}>
+                            {currency.code} ({currency.symbol})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-medium">Supported Languages</h3>
+                  <div className="space-y-2">
+                    {locales.map((locale) => (
+                      <div key={locale.code} className="flex items-center justify-between">
+                        <span>{locale.name}</span>
+                        <Switch
+                          checked={
+                            settings?.localization?.supportedLanguages?.find((l: any) => l.code === locale.code)
+                              ?.enabled ?? true
+                          }
+                          onCheckedChange={(checked) => {
+                            const supportedLanguages = [...(settings?.localization?.supportedLanguages || [])]
+                            const index = supportedLanguages.findIndex((l: any) => l.code === locale.code)
+                            if (index >= 0) {
+                              supportedLanguages[index].enabled = checked
+                            } else {
+                              supportedLanguages.push({
+                                code: locale.code,
+                                name: locale.name,
+                                enabled: checked,
+                              })
+                            }
+                            handleSave({
+                              ...settings,
+                              localization: {
+                                ...settings?.localization,
+                                supportedLanguages,
+                              },
+                            })
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-medium">Supported Currencies</h3>
+                  <div className="space-y-2">
+                    {currencies.map((currency) => (
+                      <div key={currency.code} className="flex items-center justify-between">
+                        <span>
+                          {currency.code} ({currency.symbol})
+                        </span>
+                        <Switch
+                          checked={
+                            settings?.localization?.supportedCurrencies?.find((c: any) => c.code === currency.code)
+                              ?.enabled ?? true
+                          }
+                          onCheckedChange={(checked) => {
+                            const supportedCurrencies = [...(settings?.localization?.supportedCurrencies || [])]
+                            const index = supportedCurrencies.findIndex((c: any) => c.code === currency.code)
+                            if (index >= 0) {
+                              supportedCurrencies[index].enabled = checked
+                            } else {
+                              supportedCurrencies.push({
+                                ...currency,
+                                enabled: checked,
+                              })
+                            }
+                            handleSave({
+                              ...settings,
+                              localization: {
+                                ...settings?.localization,
+                                supportedCurrencies,
+                              },
+                            })
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

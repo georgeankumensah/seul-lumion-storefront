@@ -2,13 +2,15 @@
 
 import Link from "next/link"
 import { Search, User } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
 import { useCart } from "@/lib/hooks/use-cart"
 import CartSheet from "../cart/cart-sheet"
 import MobileMenu from "./mobile-menu"
-import { useAuthStore, useUserStore } from "@/store"
+import { LanguageSelector } from "./language-selector"
+import { CurrencySelector } from "./currency-selector"
 
 export default function Header() {
-  const { user } = useUserStore();
+  const { user } = useAuth()
   const { items } = useCart()
 
   return (
@@ -41,6 +43,8 @@ export default function Header() {
 
         {/* Right Navigation */}
         <div className="flex items-center space-x-6">
+          <LanguageSelector />
+          <CurrencySelector />
           <Link href="/search" className="hover:text-gray-600">
             <Search className="h-5 w-5" />
           </Link>
