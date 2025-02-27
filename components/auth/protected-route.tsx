@@ -1,9 +1,8 @@
 "use client"
 
 import type React from "react"
-
 import { useAuth } from "@/contexts/auth-context"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { useEffect } from "react"
 import { Loader2 } from "lucide-react"
 
@@ -15,16 +14,17 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login")
+    if (!loading) {
+      if (!user) {
+        router.push(`/login?from=${encodeURIComponent(pathname)}`)
+      } else if (requireAdmin && user.role !== "admin") {
+        router.push("/")
+      }
     }
-
-    if (!loading && requireAdmin && user?.role !== "admin") {
-      router.push("/")
-    }
-  }, [loading, user, requireAdmin, router])
+  }, [loading, user, requireAdmin, router, pathname])
 
   if (loading) {
     return (

@@ -1,9 +1,8 @@
 "use client"
 
 import type React from "react"
-
 import { createContext, useContext, useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 
 interface User {
@@ -27,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
 
   useEffect(() => {
@@ -62,11 +62,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await res.json()
       setUser(data.user)
-      router.refresh()
+
       toast({
         title: "Success",
         description: "Logged in successfully",
       })
+
+      // Redirect to the intended destination or default route
+      const from = searchParams.get("from") || (data.user.role === "admin" ? "/admin" : "/account")
+      router.push(from)
+      router.refresh()
     } catch (error) {
       toast({
         title: "Error",
@@ -92,11 +97,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await res.json()
       setUser(data.user)
-      router.refresh()
+
       toast({
         title: "Success",
         description: "Account created successfully",
       })
+
+      // Redirect to the intended destination or default route
+      const from = searchParams.get("from") || "/account"
+      router.push(from)
+      router.refresh()
     } catch (error) {
       toast({
         title: "Error",
@@ -111,8 +121,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await fetch("/api/auth/logout", { method: "POST" })
       setUser(null)
-      router.refresh()
       router.push("/")
+      router.refresh()
+
       toast({
         title: "Success",
         description: "Logged out successfully",

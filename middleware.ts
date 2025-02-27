@@ -3,21 +3,24 @@ import type { NextRequest } from "next/server"
 import { verifyToken } from "./lib/auth"
 import { defaultLocale } from "./lib/i18n/config"
 
-const protectedRoutes = ["/account", "/orders", "/checkout"]
-const adminRoutes = ["/admin"]
+const publicRoutes = ["/", "/shop-all", "/new-in", "/basics", "/brand", "/search"]
 const authRoutes = ["/login", "/register", "/forgot-password"]
+const protectedRoutes = ["/account", "/orders", "/checkout", "/cart"]
+const adminRoutes = ["/admin"]
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  const token = request.cookies.get("auth-token")
+
   // Get locale from cookie or default
   const locale = request.cookies.get("locale")?.value || defaultLocale
 
-  const token = request.cookies.get("auth-token")
-  const { pathname } = request.nextUrl
-
-  // Check admin routes
+  // Handle admin routes
   if (pathname.startsWith("/admin")) {
     if (!token) {
-      return NextResponse.redirect(new URL("/login", request.url))
+      const url = new URL("/login", request.url)
+      url.searchParams.set("from", pathname)
+      return NextResponse.redirect(url)
     }
 
     const payload = await verifyToken(token.value)
@@ -26,26 +29,30 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Check protected routes
+  // Handle protected routes
   if (protectedRoutes.some((route) => pathname.startsWith(route))) {
     if (!token) {
-      const response = NextResponse.redirect(new URL("/login", request.url))
-      response.cookies.set({
-        name: "redirect-url",
-        value: pathname,
-        maxAge: 60 * 5,
-      })
-      return response
+      const url = new URL("/login", request.url)
+      url.searchParams.set("from", pathname)
+      return NextResponse.redirect(url)
+    }
+
+    const payload = await verifyToken(token.value)
+    if (!payload) {
+      const url = new URL("/login", request.url)
+      url.searchParams.set("from", pathname)
+      return NextResponse.redirect(url)
     }
   }
 
   // Redirect authenticated users away from auth pages
   if (authRoutes.includes(pathname) && token) {
-    return NextResponse.redirect(new URL("/", request.url))
+    const payload = await verifyToken(token.value)
+    if (payload) {
+      const from = request.nextUrl.searchParams.get("from") || "/"
+      return NextResponse.redirect(new URL(from, request.url))
+    }
   }
-
-  // Clone the URL to add locale
-  const newUrl = new URL(request.url)
 
   // Add locale to headers for server components
   const requestHeaders = new Headers(request.headers)

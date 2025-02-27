@@ -59,16 +59,19 @@
     "vaul": "^0.9.6",
     "zod": "^3.24.1",
     "@types/react": "latest",
-    "@types/react-dom": "latest",
     "immer": "latest",
     "use-sync-external-store": "latest",
+    "@types/react-dom": "latest",
+    "zustand": "latest",
     "jose": "latest",
     "mongoose": "latest",
     "bcryptjs": "latest",
     "@vercel/blob": "latest",
     "swr": "latest",
     "google-auth-library": "latest",
-    "zustand": "latest"
+    "socket.io": "latest",
+    "http": "latest",
+    "socket.io-client": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",
